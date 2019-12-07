@@ -20,10 +20,11 @@ push:
 	docker push $(REPO):latest
 
 rbac:
-	kubectl create clusterrolebinding default-view --clusterrole=view --serviceaccount=default:default
+	kubectl apply -f rbac.yaml
+	kubectl create clusterrolebinding ep-healthcheck-rw --clusterrole=ep-healthcheck --serviceaccount=default:ep-healthcheck
 
 run:
-	kubectl run --rm -i demo --image=$(REPO):$(TAG) --image-pull-policy=Never
+	kubectl run --rm -i demo --image=$(REPO):$(TAG) --image-pull-policy=Never --serviceaccount=ep-healthcheck
 
 patch:
 	kubectl patch deployment demo -p '{"spec":{"template":{"spec":{"containers":[{"name":"demo","env":[{"name":"RESTART_","value":"'$(shell date +%s)'"}]}]}}}}'
@@ -31,7 +32,7 @@ patch:
 ep:
 	kubectl apply -f ep.yaml
 
-debug: build patch ep
+debug: ep build patch
 
 clean:
 	kubectl delete deployment demo
