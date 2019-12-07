@@ -1,8 +1,9 @@
 REGISTRY ?= 
-IMAGE ?= op/client-go-incluster
+PROJECT ?= op
+IMAGE ?= client-go-incluster
 TAG ?= latest
 
-REPO = $(REGISTRY)/$(IMAGE):$(TAG)
+REPO = $(REGISTRY)/$(PROJECT)/$(IMAGE)
 
 all: build push
 
@@ -11,9 +12,9 @@ build: build-local build-docker
 build-local:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/app
 build-docker:
-	docker build -t $(REPO) .
+	docker build -t $(REPO):$(TAG) .
 
 push:
-	docker tag $(REPO) $(REGISTRY)/$(IMAGE):latest
-	docker push $(REPO)
-	docker push $(REGISTRY)/$(IMAGE):latest
+	docker tag $(REPO):$(TAG) $(REPO):latest
+	docker push $(REPO):$(TAG)
+	docker push $(REPO):latest
