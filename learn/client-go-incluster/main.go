@@ -63,13 +63,23 @@ func main() {
 	for {
 		for _, e := range ep {
 			log.Println(e.Subsets[0])
-			addr := map[string]interface{}{
-				"subsets": []interface{}{
-					0: map[string]interface{}{
-						"notReadyAddresses": []interface{}{map[string]string{
-							"ip": "39.156.69.79"}},
-						"addresses": e.Subsets[0].Addresses,
-						"ports":     e.Subsets[0].Ports}}}
+			// see https://blog.csdn.net/weixin_34151004/article/details/91757549
+			addr := make(map[string]interface{})
+			subsets := make([]interface{}, 0)
+			item := make(map[string]interface{})
+			notReadyAddresses := make([]interface{}, 0)
+
+			ip := map[string]string{"ip": "39.156.69.79"}
+
+			notReadyAddresses = append(notReadyAddresses, ip)
+
+			item["notReadyAddresses"] = notReadyAddresses
+			item["addresses"] = e.Subsets[0].Addresses
+			item["ports"] = e.Subsets[0].Ports
+
+			subsets = append(subsets, item)
+			addr["subsets"] = subsets
+
 			update(clientset, e.Namespace, e.Name, addr)
 
 			addrStr, _ := json.Marshal(addr)
