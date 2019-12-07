@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Endpoints
+metadata:
+  annotations:
+    ops-itop/ep-origin: "10.2.3.4,39.156.69.79"
+  labels:
+    type: external
+  name: ep-healthcheck-1
+subsets:
+- addresses:
+  - ip: 10.2.3.4
+  - ip: 39.156.69.79
+  ports:
+  - port: 80
+    protocol: TCP
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  annotations:
+    ops-itop/ep-origin: "10.2.3.5,39.156.69.79"
+  labels:
+    type: external
+  name: ep-healthcheck-2
+subsets:
+- addresses:
+  - ip: 10.2.3.5
+  - ip: 39.156.69.79
+  ports:
+  - port: 80
+    protocol: TCP

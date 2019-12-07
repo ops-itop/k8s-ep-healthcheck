@@ -44,19 +44,26 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
+
+	// only check custom endpoints with label type=external
+	labelSelector := "type=external"
+	listOptions := metav1.ListOptions{
+		LabelSelector: labelSelector,
+	}
+
 	for {
-		// get pods in all the namespaces by omitting namespace
-		// Or specify namespace to get pods in particular namespace
-		pods, err := clientset.CoreV1().Pods("").List(metav1.ListOptions{})
+		// get endpoints in all the namespaces by omitting namespace
+		// Or specify namespace to get endpoints in particular namespace
+		endpoints, err := clientset.CoreV1().Endpoints("").List(listOptions)
 		if err != nil {
 			panic(err.Error())
 		}
-		fmt.Printf("There are %d pods in the cluster\n", len(pods.Items))
+		fmt.Printf("%+v\n", endpoints.Items)
 
 		// Examples for error handling:
 		// - Use helper functions e.g. errors.IsNotFound()
 		// - And/or cast to StatusError and use its properties like e.g. ErrStatus.Message
-		_, err = clientset.CoreV1().Pods("default").Get("example-xxxxx", metav1.GetOptions{})
+		_, err = clientset.CoreV1().Endpoints("default").Get("example-xxxxx", metav1.GetOptions{})
 		if errors.IsNotFound(err) {
 			fmt.Printf("Pod example-xxxxx not found in default namespace\n")
 		} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
@@ -67,6 +74,6 @@ func main() {
 			fmt.Printf("Found example-xxxxx pod in default namespace\n")
 		}
 
-		time.Sleep(10 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 }
