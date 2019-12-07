@@ -15,7 +15,7 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
+	"log"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -58,20 +58,20 @@ func main() {
 		if err != nil {
 			panic(err.Error())
 		}
-		fmt.Printf("%+v\n", endpoints.Items)
+		log.Printf("%+v\n", endpoints.Items)
 
 		// Examples for error handling:
 		// - Use helper functions e.g. errors.IsNotFound()
 		// - And/or cast to StatusError and use its properties like e.g. ErrStatus.Message
 		_, err = clientset.CoreV1().Endpoints("default").Get("example-xxxxx", metav1.GetOptions{})
 		if errors.IsNotFound(err) {
-			fmt.Printf("Pod example-xxxxx not found in default namespace\n")
+			log.Printf("Pod example-xxxxx not found in default namespace\n")
 		} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
-			fmt.Printf("Error getting pod %v\n", statusError.ErrStatus.Message)
+			log.Printf("Error getting pod %v\n", statusError.ErrStatus.Message)
 		} else if err != nil {
 			panic(err.Error())
 		} else {
-			fmt.Printf("Found example-xxxxx pod in default namespace\n")
+			log.Printf("Found example-xxxxx pod in default namespace\n")
 		}
 
 		time.Sleep(1 * time.Second)
