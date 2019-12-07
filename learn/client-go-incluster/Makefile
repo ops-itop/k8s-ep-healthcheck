@@ -18,3 +18,12 @@ push:
 	docker tag $(REPO):$(TAG) $(REPO):latest
 	docker push $(REPO):$(TAG)
 	docker push $(REPO):latest
+
+rbac:
+	kubectl create clusterrolebinding default-view --clusterrole=view --serviceaccount=default:default
+
+run:
+	kubectl run --rm -i demo --image=$(REPO):$(TAG) --image-pull-policy=Never
+
+clean:
+	kubectl delete deployment demo
