@@ -34,6 +34,7 @@ func _init(c *kubernetes.Clientset, l metav1.ListOptions) {
 	//log.Printf("Endpionts: %s\n", epStr)
 }
 
+// need update global var ep.
 func watchEndpoints(c *kubernetes.Clientset, l metav1.ListOptions) {
 
 }
@@ -98,11 +99,9 @@ func StringSliceEqual(a, b []string) bool {
 	return true
 }
 
-// tcp checker
-func tcpChecker(e corev1.Endpoints, c *kubernetes.Clientset, pwg *sync.WaitGroup) {
+func getIPs(e corev1.Endpoints) ([]string, []string) {
 	ips := make([]string, 0)
 	notReadyIps := make([]string, 0)
-	var port string
 
 	for _, v := range e.Subsets[0].Addresses {
 		ips = append(ips, v.IP)
@@ -112,6 +111,13 @@ func tcpChecker(e corev1.Endpoints, c *kubernetes.Clientset, pwg *sync.WaitGroup
 		ips = append(ips, v.IP)
 		notReadyIps = append(notReadyIps, v.IP)
 	}
+	return ips, notReadyIps
+}
+
+// tcp checker
+func tcpChecker(e corev1.Endpoints, c *kubernetes.Clientset, pwg *sync.WaitGroup) {
+	ips, notReadyIps := getIPs(e)
+	var port string
 
 	// 只支持检测第一个端口
 	port = fmt.Sprint(e.Subsets[0].Ports[0].Port)
@@ -141,7 +147,18 @@ func tcpChecker(e corev1.Endpoints, c *kubernetes.Clientset, pwg *sync.WaitGroup
 		if StringSliceEqual(notReadyIps, notReadyAddresses) {
 			log.Printf("Already Marked notReady IPs for %v.%v. Ignore", e.Namespace, e.Name)
 		} else {
-			update(c, e.Namespace, e.Name, addr)
+			// 执行更新前有必要看看线上endpoints是否和 ips 完全一致，防止出现老数据刷掉新数据的情况
+			currentEp, err := c.CoreV1().Endpoints(e.Namespace).Get(e.Name, metav1.GetOptions{})
+			if err != nil {
+				return
+			}
+			currentIPs, _ := getIPs(*currentEp)
+
+			if StringSliceEqual(ips, currentIPs) {
+				update(c, e.Namespace, e.Name, addr)
+			} else {
+				log.Printf("currentIps not same with ips for %v.%v. Ignore", e.Namespace, e.Name)
+			}
 		}
 	} else {
 		log.Printf("No lived endpoints in %v.%v. Ignore", e.Namespace, e.Name)
