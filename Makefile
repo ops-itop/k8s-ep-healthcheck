@@ -1,12 +1,12 @@
 REGISTRY ?= registry.cn-beijing.aliyuncs.com
-PROJECT ?= op
+PROJECT ?= kubebase
 IMAGE ?= k8s-ep-healthcheck
 TAG ?= latest
 NS ?= default
 
 REPO = $(REGISTRY)/$(PROJECT)/$(IMAGE)
 
-all: build push
+all: build push run
 
 build: build-local build-docker
 
@@ -20,15 +20,11 @@ push:
 	docker push $(REPO):$(TAG)
 	docker push $(REPO):latest
 
-rbac:
-	kubectl -n $(NS) apply -f rbac.yaml
-	kubectl create clusterrolebinding ep-healthcheck-rw --clusterrole=ep-healthcheck --serviceaccount=$(NS):ep-healthcheck
-
 run:
-	kubectl -n $(NS) run --rm -i demo --image=$(REPO):$(TAG) --image-pull-policy=Never --serviceaccount=ep-healthcheck
+	sed "s/__NAMESPACE__/$(NS)/g" deploy/with-rbac.yaml | kubectl -n $(NS) apply -f -
 
 patch:
-	kubectl -n $(NS) patch deployment demo -p '{"spec":{"template":{"spec":{"containers":[{"name":"demo","env":[{"name":"RESTART_","value":"'$(shell date +%s)'"}]}]}}}}'
+	kubectl -n $(NS) patch deployment k8s-ep-healthcheck -p '{"spec":{"template":{"spec":{"containers":[{"name":"k8s-ep-healthcheck","env":[{"name":"RESTART_","value":"'$(shell date +%s)'"}]}]}}}}'
 
 ep:
 	kubectl -n $(NS) apply -f ep.yaml
@@ -36,4 +32,4 @@ ep:
 debug: ep build patch
 
 clean:
-	kubectl delete deployment demo
+	kubectl delete deployment k8s-ep-healthcheck
