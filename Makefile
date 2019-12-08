@@ -21,7 +21,7 @@ push:
 	docker push $(REPO):latest
 
 run:
-	sed "s/__NAMESPACE__/$(NS)/g" deploy/with-rbac.yaml | kubectl -n $(NS) apply -f -
+	sed "s/__NAMESPACE__/$(NS)/g" deploy/with-rbac.yaml |sed "s#__IMAGE__#$(REPO):$(TAG)#g" | kubectl -n $(NS) apply -f -
 
 patch:
 	kubectl -n $(NS) patch deployment k8s-ep-healthcheck -p '{"spec":{"template":{"spec":{"containers":[{"name":"k8s-ep-healthcheck","env":[{"name":"RESTART_","value":"'$(shell date +%s)'"}]}]}}}}'

@@ -52,7 +52,7 @@ spec:
     spec:
       containers:
       - name: k8s-ep-healthcheck
-        image: registry.cn-beijing.aliyuncs.com/kubebase/k8s-ep-healthcheck:latest
+        image: __IMAGE__
         imagePullPolicy: Always
         resources:
           limits:
