@@ -25,3 +25,51 @@ subsets:
   ports:
   - port: 80
     protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ep-healthcheck-1
+spec:
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ep-healthcheck-2
+spec:
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata: 
+  name: ep-healthcheck-1
+spec:
+  rules:
+  - host: ep1.demo.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: ep-healthcheck-1
+          servicePort: 80
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata: 
+  name: ep-healthcheck-2
+spec:
+  rules:
+  - host: ep2.demo.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: ep-healthcheck-2
+          servicePort: 80
