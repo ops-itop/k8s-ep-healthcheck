@@ -26,15 +26,19 @@ func Scanner() {
 	// 等待执行完成
 	wg.Wait()
 	log.Printf("notReadyAddress: %v\n", notReadyAddress)
-	//log.Printf("Addresses: %v\n", addresses)
+	log.Printf("Addresses: %v\n", addresses)
 }
 
 func ScanPort(ip string, addresses *[]string, notReadyAddress *[]string, wg *sync.WaitGroup) {
-	//log.Println("scaning ", ip, "port", port)
-	_, err := net.DialTimeout("tcp", ip+":"+port, time.Millisecond*100)
+	log.Println("scaning ", ip, "port", port)
+
+	conn, err := net.DialTimeout("tcp", ip+":"+port, time.Millisecond*100)
+	if conn != nil {
+		defer conn.Close()
+	}
 
 	if err != nil {
-		//log.Println("notReadyAddress: ", ip, "errMsg: ", err)
+		log.Println("notReadyAddress: ", ip, "errMsg: ", err)
 		mu.Lock()
 		*notReadyAddress = append(*notReadyAddress, ip)
 		mu.Unlock()
