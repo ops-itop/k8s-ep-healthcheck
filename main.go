@@ -31,7 +31,7 @@ var listOptions = metav1.ListOptions{
 func _init(c *kubernetes.Clientset) {
 	endpoints, err := c.CoreV1().Endpoints("").List(listOptions)
 	if err != nil {
-		panic(err.Error())
+		log.Fatal(err.Error())
 	}
 	mu.Lock()
 	ep = endpoints.Items
@@ -42,7 +42,16 @@ func _init(c *kubernetes.Clientset) {
 
 // need update global var ep.
 func watchEndpoints(c *kubernetes.Clientset) {
+	watcher, err := c.CoreV1().Endpoints("").Watch(listOptions)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 
+	for e := range watcher.ResultChan() {
+		endpoint := e.Object.(*corev1.Endpoints)
+		log.Printf("Event %v on %v.%v. Re init", e.Type, endpoint.Namespace, endpoint.Name)
+		_init(c)
+	}
 }
 
 // patch endpoint
@@ -86,6 +95,16 @@ func epBuilder(addresses []string, notReadyAddresses []string, ports []corev1.En
 	return addr
 }
 
+// check if string in slice
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
 // check if two slice equal
 func StringSliceEqual(a, b []string) bool {
 	if len(a) != len(b) {
@@ -96,8 +115,9 @@ func StringSliceEqual(a, b []string) bool {
 		return false
 	}
 
-	for i, v := range a {
-		if v != b[i] {
+	// 忽略顺序
+	for _, v := range a {
+		if !contains(b, v) {
 			return false
 		}
 	}
@@ -144,15 +164,15 @@ func tcpChecker(e corev1.Endpoints, c *kubernetes.Clientset, pwg *sync.WaitGroup
 
 	// 等待执行完成
 	wg.Wait()
-	log.Printf("notReadyAddresses: %v\n", notReadyAddresses)
-	log.Printf("notReadyIps: %v\n", notReadyIps)
-	log.Printf("Addresses: %v\n", addresses)
+	//log.Printf("Addresses: %v\n", addresses)
 
 	addr := epBuilder(addresses, notReadyAddresses, e.Subsets[0].Ports)
 	if len(addresses) > 0 {
 		if StringSliceEqual(notReadyIps, notReadyAddresses) {
 			log.Printf("Already Marked notReady IPs for %v.%v. Ignore", e.Namespace, e.Name)
 		} else {
+			log.Printf("notReadyAddresses: %v\n", notReadyAddresses)
+			log.Printf("notReadyIps: %v\n", notReadyIps)
 			// 执行更新前有必要看看线上endpoints是否和 ips 完全一致，防止出现老数据刷掉新数据的情况
 			currentEp, err := c.CoreV1().Endpoints(e.Namespace).Get(e.Name, metav1.GetOptions{})
 			if err != nil {
