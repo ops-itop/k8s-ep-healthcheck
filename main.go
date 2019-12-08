@@ -22,8 +22,14 @@ var mu sync.Mutex
 // global var store all endpoints
 var ep []corev1.Endpoints
 
-func _init(c *kubernetes.Clientset, l metav1.ListOptions) {
-	endpoints, err := c.CoreV1().Endpoints("").List(l)
+// only check custom endpoints with label type=external
+var labelSelector = "type=external"
+var listOptions = metav1.ListOptions{
+	LabelSelector: labelSelector,
+}
+
+func _init(c *kubernetes.Clientset) {
+	endpoints, err := c.CoreV1().Endpoints("").List(listOptions)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -35,7 +41,7 @@ func _init(c *kubernetes.Clientset, l metav1.ListOptions) {
 }
 
 // need update global var ep.
-func watchEndpoints(c *kubernetes.Clientset, l metav1.ListOptions) {
+func watchEndpoints(c *kubernetes.Clientset) {
 
 }
 
@@ -158,6 +164,8 @@ func tcpChecker(e corev1.Endpoints, c *kubernetes.Clientset, pwg *sync.WaitGroup
 				update(c, e.Namespace, e.Name, addr)
 			} else {
 				log.Printf("currentIps not same with ips for %v.%v. Ignore", e.Namespace, e.Name)
+				// update global ep
+				_init(c)
 			}
 		}
 	} else {
@@ -207,12 +215,6 @@ func retryPort(ip string, port string) error {
 
 func main() {
 
-	// only check custom endpoints with label type=external
-	labelSelector := "type=external"
-	listOptions := metav1.ListOptions{
-		LabelSelector: labelSelector,
-	}
-
 	// creates the in-cluster config
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -226,11 +228,11 @@ func main() {
 	}
 
 	// 首先初始化 ep 变量
-	_init(clientset, listOptions)
+	_init(clientset)
 
 	var wg sync.WaitGroup
 	// 监视 ep 变更事件
-	go watchEndpoints(clientset, listOptions)
+	go watchEndpoints(clientset)
 
 	for {
 		for _, e := range ep {
