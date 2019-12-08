@@ -1,7 +1,5 @@
 package main
 
-// see https://www.cnblogs.com/qiyeboy/p/10133716.html
-
 import (
 	"log"
 	"net"
@@ -21,7 +19,7 @@ func Scanner() {
 	wg.Add(concurrency)
 	//并发启动扫描函数
 	for i := 0; i < concurrency; i++ {
-		go ScanPort(ips[i], &addresses, &notReadyAddress, wg.Done)
+		go ScanPort(ips[i], &addresses, &notReadyAddress, &wg)
 	}
 
 	// 等待执行完成
@@ -30,11 +28,8 @@ func Scanner() {
 	log.Printf("Addresses: %v\n", addresses)
 }
 
-func ScanPort(ip string, addresses *[]string, notReadyAddress *[]string, done func()) {
-	defer done()
-
+func ScanPort(ip string, addresses *[]string, notReadyAddress *[]string, wg *sync.WaitGroup) {
 	log.Println("scaning ", ip, "port", port)
-
 	_, err := net.DialTimeout("tcp", ip+":"+port, time.Millisecond*100)
 
 	if err != nil {
@@ -43,6 +38,8 @@ func ScanPort(ip string, addresses *[]string, notReadyAddress *[]string, done fu
 	} else {
 		*addresses = append(*addresses, ip)
 	}
+
+	wg.Done()
 }
 
 func main() {
