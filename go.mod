@@ -1,4 +1,4 @@
-module client-go-incluster
+module github.com/ops-itop/k8s-ep-healthcheck
 
 go 1.13
 
