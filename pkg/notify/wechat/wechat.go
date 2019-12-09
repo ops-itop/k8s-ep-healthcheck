@@ -8,6 +8,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 const (
@@ -17,9 +18,10 @@ const (
 
 var requestError = errors.New("request error,check url or network")
 
-type access_token struct {
+type AccessToken struct {
 	Access_token string `json:"access_token"`
-	Expires_in   int    `json:"expires_in"`
+	Expires_in   int64  `json:"expires_in"`
+	Next_due     int64
 }
 
 type WechatMsg struct {
@@ -58,7 +60,7 @@ func SendMsg(Access_token string, msgbody []byte) error {
 	return nil
 }
 
-func GetToken(corpid, corpsecret string) (at access_token, err error) {
+func GetToken(corpid, corpsecret string) (at AccessToken, err error) {
 	resp, err := http.Get(tokenUrl + corpid + "&corpsecret=" + corpsecret)
 	if err != nil {
 		return
@@ -75,5 +77,24 @@ func GetToken(corpid, corpsecret string) (at access_token, err error) {
 	if at.Access_token == "" {
 		err = errors.New("corpid or corpsecret error.")
 	}
+
+	at.Next_due = time.Now().Unix() + at.Expires_in
 	return
+}
+
+func UpdateToken(token *AccessToken, corpid string, corpsecret string) (err error) {
+	if token.Access_token == "" {
+		*token, err = GetToken(corpid, corpsecret)
+		if err != nil {
+			return err
+		}
+	}
+
+	if token.Next_due >= time.Now().Unix() {
+		*token, err = GetToken(corpid, corpsecret)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
