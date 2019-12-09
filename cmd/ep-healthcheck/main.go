@@ -10,6 +10,8 @@ import (
 	"time"
 
 	//"k8s.io/apimachinery/pkg/api/errors"
+	"github.com/caarlos0/env/v6"
+	"github.com/ops-itop/k8s-ep-healthcheck/pkg/notify/wechat"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -22,11 +24,19 @@ var mu sync.Mutex
 // global var store all endpoints
 var ep []corev1.Endpoints
 
-// only check custom endpoints with label type=external
-var labelSelector = "type=external"
-var listOptions = metav1.ListOptions{
-	LabelSelector: labelSelector,
+var wechatToken wechat.AccessToken
+
+var listOptions metav1.ListOptions
+
+type config struct {
+	LabelSelector string `env:"LABELSELECTOR" envDefault:"type=external"` //only check custom endpoints with label type=external
+	Touser        string `env:"TOUSER", envDefault:"@all"`
+	Corpid        string `env:"CORPID"`
+	Corpsecret    string `env:"CORPSECRET"`
+	Agentid       int    `env:"AGENTID"`
 }
+
+var cfg config
 
 func _init(c *kubernetes.Clientset) {
 	endpoints, err := c.CoreV1().Endpoints("").List(listOptions)
@@ -62,9 +72,30 @@ func update(c *kubernetes.Clientset, namespace string, epName string, data map[s
 
 	if err != nil {
 		log.Printf("Update Ednpoint %v.%v Error: %v", namespace, epName, err)
+		return
 	}
 
 	log.Printf("New addresses for Endpoint %v.%v: %v", namespace, epName, string(playLoadBytes))
+
+	// notify
+	err = wechat.UpdateToken(&wechatToken, cfg.Corpid, cfg.Corpsecret)
+	if err != nil {
+		log.Printf("Notify error. UpdateToken failed. Endpoint %v.%v: %v", namespace, epName, err)
+		return
+	}
+
+	content := "Custom Endpoint HealthCheck:\nNew address for Endpoint " + namespace + "." + epName + "\n" + string(playLoadBytes)
+	msg := wechat.WechatMsg{Touser: cfg.Touser, Msgtype: "text", Agentid: cfg.Agentid, Text: map[string]string{"content": content}}
+	buf, err := json.Marshal(msg)
+	if err != nil {
+		log.Printf("Notify error. json.Marshal(msg) failed. Endpoint %v.%v: %v", namespace, epName, err)
+		return
+	}
+	err = wechat.SendMsg(wechatToken.Access_token, buf)
+	if err != nil {
+		log.Printf("Notify error. SendMsg failed. Endpoint %v.%v: %v", namespace, epName, err)
+		return
+	}
 }
 
 // convert ip list to endpoints addresses list
@@ -234,7 +265,6 @@ func retryPort(ip string, port string) error {
 }
 
 func main() {
-
 	// creates the in-cluster config
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -246,6 +276,14 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
+
+	// app config
+	err = env.Parse(&cfg)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	listOptions.LabelSelector = cfg.LabelSelector
 
 	// 首先初始化 ep 变量
 	_init(clientset)
