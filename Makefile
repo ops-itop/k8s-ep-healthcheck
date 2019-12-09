@@ -11,7 +11,7 @@ all: build push run patch
 build: build-local build-docker
 
 build-local:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/app
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/ep-healthcheck cmd/ep-healthcheck/main.go
 build-docker:
 	docker build -t $(REPO):$(TAG) .
 

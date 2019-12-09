@@ -1,3 +1,3 @@
 FROM alpine:3.10
-COPY bin/app /app
-ENTRYPOINT /app
+COPY bin/ep-healthcheck /ep-healthcheck
+ENTRYPOINT /ep-healthcheck
