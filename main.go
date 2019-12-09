@@ -255,6 +255,9 @@ func main() {
 	go watchEndpoints(clientset)
 
 	for {
+		if len(ep) == 0 {
+			log.Println("no custom endpoints.")
+		}
 		for _, e := range ep {
 			wg.Add(1)
 			// tcp检测
