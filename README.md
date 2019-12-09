@@ -17,3 +17,11 @@ Custom endpoint should be labeled with `type=external`
 ```
 REGISTRY=your.registry.com PROJECT=myproject make
 ```
+
+### Notify
+
+Support wechat. edit `deploy/with-rbac.yaml` to set env or use make
+
+```
+CORPID=corpid CORPSECRET=corpsecret AGENTID=agentid TOUSER=@all make run
+```

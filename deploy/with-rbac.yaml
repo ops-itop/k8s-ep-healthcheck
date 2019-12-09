@@ -54,6 +54,15 @@ spec:
       - name: k8s-ep-healthcheck
         image: __IMAGE__
         imagePullPolicy: Always
+        env:
+        - name: CORPID
+          value: "__CORPID__"
+        - name: CORPSECRET
+          value: "__CORPSECRET__"
+        - name: AGENTID
+          value: "__AGENTID__"
+        - name: TOUSER
+          value: "__TOUSER__"
         resources:
           limits:
             cpu: "0.5"

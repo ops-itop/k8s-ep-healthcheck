@@ -3,6 +3,7 @@ module github.com/ops-itop/k8s-ep-healthcheck
 go 1.13
 
 require (
+	github.com/caarlos0/env/v6 v6.1.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
