@@ -238,7 +238,9 @@ func checkPort(ip string, port string, addresses *[]string, notReadyAddresses *[
 		*notReadyAddresses = append(*notReadyAddresses, ip)
 		mu.Unlock()
 	} else {
+		mu.Lock()
 		*addresses = append(*addresses, ip)
+		mu.Unlock()
 	}
 
 	wg.Done()
