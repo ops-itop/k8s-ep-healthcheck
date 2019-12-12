@@ -1,6 +1,7 @@
 package main
 
 import (
+	blog "github.com/astaxie/beego/logs"
 	log "github.com/sirupsen/logrus"
 	"os"
 	//"reflect"
@@ -43,4 +44,14 @@ func main() {
 
 	contextLogger.Info("I'll be logged with common and other field")
 	contextLogger.Info("Me too")
+
+	// test beego logs
+	beegolog := blog.NewLogger(10000)
+	beegolog.SetLogger("console", `{"level":4}`)
+	beegolog.Trace("trace %s %s", "param1", "param2")
+	beegolog.Debug("debug")
+	beegolog.Info("info")
+	beegolog.Warn("warning")
+	beegolog.Error("error")
+	beegolog.Critical("critical")
 }
