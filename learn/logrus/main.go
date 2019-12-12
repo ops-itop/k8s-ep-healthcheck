@@ -3,14 +3,22 @@ package main
 import (
 	log "github.com/sirupsen/logrus"
 	"os"
+	//"reflect"
 )
+
+var level = os.Getenv("LOGLEVEL")
 
 func init() {
 	log.SetOutput(os.Stdout)
-	log.SetLevel(log.InfoLevel)
+	logLevel, err := log.ParseLevel(level)
+	if err != nil {
+		log.Panic("Log Level not illegal.You should use trace,debug,info,warn,warning,error,fatal,panic")
+	}
+	log.SetLevel(logLevel)
 }
 
 func main() {
+	log.Info("Log Level is " + level)
 	log.WithFields(log.Fields{
 		"animal": "walrus",
 		"size":   10,
