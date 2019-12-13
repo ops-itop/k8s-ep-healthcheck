@@ -89,7 +89,7 @@ func getEndpoints() {
 	mu.Unlock()
 	log.Info("Init endpoints seccessful")
 	epStr, _ := json.MarshalIndent(ep, "", " ")
-	log.Debug("Endpionts: ", epStr)
+	log.Trace("Endpionts: ", string(epStr))
 }
 
 // need update global var ep.
