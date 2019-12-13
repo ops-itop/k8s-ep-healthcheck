@@ -152,6 +152,8 @@ func patchEndpoint(namespace string, epName string, data map[string]interface{})
 	if err != nil {
 		epLog.Error("Notify error. SendMsg failed: ", err.Error())
 		return
+	} else {
+		epLog.Info("Notify succ. To: ", cfg.Touser)
 	}
 }
 
