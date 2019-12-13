@@ -139,7 +139,7 @@ func patchEndpoint(namespace string, epName string, data map[string]interface{})
 		"expires_in": wechatToken.Expires_in,
 		"next_due":   wechatToken.Next_due,
 		"now":        now,
-	}).Debug("Update wechatToke")
+	}).Debug("Update wechatToken")
 
 	content := now + "\nCustom Endpoint HealthCheck:\nNew address for Endpoint " + namespace + "." + epName + "\n" + string(playLoadBytes)
 	msg := wechat.WechatMsg{Touser: cfg.Touser, Msgtype: "text", Agentid: cfg.Agentid, Text: map[string]string{"content": content}}

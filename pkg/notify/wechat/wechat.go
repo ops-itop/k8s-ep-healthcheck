@@ -90,7 +90,7 @@ func UpdateToken(token *AccessToken, corpid string, corpsecret string) (err erro
 		}
 	}
 
-	if token.Next_due >= time.Now().Unix() {
+	if token.Next_due <= time.Now().Unix() {
 		*token, err = GetToken(corpid, corpsecret)
 		if err != nil {
 			return err
