@@ -297,26 +297,16 @@ func appInit() {
 }
 
 func doCheck() {
-	// 首先初始化 ep 变量
-	getEndpoints()
-
-	var wg sync.WaitGroup
-	// 监视 ep 变更事件
-	go watchEndpoints()
-
-	for {
-		if len(ep) == 0 {
-			log.Info("No custom endpoints.")
-		}
-		for _, e := range ep {
-			wg.Add(1)
-			// tcp检测
-			go tcpChecker(e, &wg)
-		}
-
-		wg.Wait()
-		time.Sleep(time.Duration(cfg.Interval) * time.Second)
+	if len(ep) == 0 {
+		log.Info("No custom endpoints.")
 	}
+	var wg sync.WaitGroup
+	for _, e := range ep {
+		wg.Add(1)
+		// tcp检测
+		go tcpChecker(e, &wg)
+	}
+	wg.Wait()
 }
 
 func main() {
@@ -325,5 +315,14 @@ func main() {
 	appInit()
 	logInit()
 
-	doCheck()
+	// 首先初始化 ep 变量
+	getEndpoints()
+
+	// 监视 ep 变更事件
+	go watchEndpoints()
+
+	for {
+		doCheck()
+		time.Sleep(time.Duration(cfg.Interval) * time.Second)
+	}
 }
