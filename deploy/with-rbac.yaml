@@ -34,12 +34,14 @@ subjects:
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: k8s-ep-healthcheck
+  name: __APP__
+  labels:
+    app: __APP__
 spec:
   replicas: 1
   selector:
     matchLabels:
-      run: k8s-ep-healthcheck
+      app: __APP__
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -48,10 +50,10 @@ spec:
   template:
     metadata:
       labels:
-        run: k8s-ep-healthcheck
+        app: __APP__
     spec:
       containers:
-      - name: k8s-ep-healthcheck
+      - name: __APP__
         image: __IMAGE__
         imagePullPolicy: Always
         env:
@@ -88,3 +90,32 @@ spec:
       serviceAccount: ep-healthcheck
       serviceAccountName: ep-healthcheck
       terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: __APP__
+  labels:
+    app: __APP__
+spec:
+  selector:    
+    app: __APP__
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+    name: http
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata: 
+  name: __APP__
+spec:
+  rules:
+  - host: __HOST__
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: __APP__
+          servicePort: 8080

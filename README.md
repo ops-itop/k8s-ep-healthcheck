@@ -25,3 +25,22 @@ Support wechat. edit `deploy/with-rbac.yaml` to set env or use make
 ```
 CORPID=corpid CORPSECRET=corpsecret AGENTID=agentid TOUSER=@all make run
 ```
+
+## Available config
+
+|ENV | usage| default value|
+|--|--|--|
+|REGISTRY | custom registry | registry.cn-beijing.aliyuncs.com |
+|PROJECT | custom project name |kubebase |
+|IMAGE | custom image name |k8s-ep-healthcheck |
+|TAG | custom image tag |latest |
+|NS | kubernetes namespace for deploy | default |
+|CORPID |wechat corpid | corpid |
+|CORPSECRET |wechat corpsecret| corpsecret|
+|AGENTID | wechat agentid |0|
+|TOUSER | wechat touser |@all|
+|LOGLEVEL | log level |debug|
+|INTERVAL | check interval for endpoints|2|
+|TIMEOUT | timeout for tcp check |500|
+|RETRY | retry for tcp check |3|
+|HOST | hostname for ingress |$(IMAGE).local|

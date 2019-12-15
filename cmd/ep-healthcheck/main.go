@@ -20,6 +20,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+
+	"github.com/gin-contrib/pprof"
+	"github.com/gin-gonic/gin"
 )
 
 // version info
@@ -320,6 +323,12 @@ func main() {
 
 	// 监视 ep 变更事件
 	go watchEndpoints()
+
+	router := gin.Default()
+	pprof.Register(router)
+	go func() {
+		router.Run()
+	}()
 
 	for {
 		doCheck()

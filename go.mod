@@ -5,13 +5,14 @@ go 1.13
 require (
 	github.com/caarlos0/env/v6 v6.1.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
+	github.com/gin-contrib/pprof v1.2.1 // indirect
+	github.com/gin-gonic/gin v1.5.0 // indirect
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
 	github.com/google/btree v1.0.0 // indirect
 	github.com/googleapis/gnostic v0.3.1 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
 	github.com/json-iterator/go v1.1.8 // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/sirupsen/logrus v1.4.2 // indirect
 	golang.org/x/crypto v0.0.0-20191205180655-e7c4368fe9dd // indirect

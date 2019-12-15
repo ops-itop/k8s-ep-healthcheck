@@ -18,6 +18,7 @@ LOGLEVEL ?= debug
 INTERVAL ?= 2
 TIMEOUT ?= 500
 RETRY ?= 3
+HOST ?= $(IMAGE).local
 
 REPO = $(REGISTRY)/$(PROJECT)/$(IMAGE)
 
@@ -46,6 +47,8 @@ run:
 		sed "s/__INTERVAL__/$(INTERVAL)/g" | \
 		sed "s/__TIMEOUT__/$(TIMEOUT)/g" | \
 		sed "s/__RETRY__/$(RETRY)/g" | \
+		sed "s/__APP__/$(IMAGE)/g" | \
+		sed "s/__HOST__/$(HOST)/g" | \
 		kubectl -n $(NS) apply -f -
 
 patch:
@@ -56,5 +59,8 @@ ep:
 
 debug: ep build patch
 
+proxy:
+	echo "/api/v1/namespaces/$(NS)/services/$(IMAGE):8080/proxy/"
+	kubectl proxy --address=0.0.0.0 --port=8080 --accept-hosts '.*'
 clean:
 	kubectl delete deployment k8s-ep-healthcheck
