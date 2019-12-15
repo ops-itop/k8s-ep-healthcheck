@@ -14,10 +14,14 @@ CORPID ?= corpid
 CORPSECRET ?= corpsecret
 AGENTID ?= 0
 TOUSER ?= @all
+LOGLEVEL ?= debug
+INTERVAL ?= 2
+TIMEOUT ?= 500
+RETRY ?= 3
 
 REPO = $(REGISTRY)/$(PROJECT)/$(IMAGE)
 
-all: build push run patch
+all: build push run
 
 build: build-local build-docker
 
@@ -38,6 +42,10 @@ run:
 		sed "s/__CORPSECRET__/$(CORPSECRET)/g" | \
 		sed "s/__AGENTID__/$(AGENTID)/g" | \
 		sed "s/__TOUSER__/$(TOUSER)/g" | \
+		sed "s/__LOGLEVEL__/$(LOGLEVEL)/g" | \
+		sed "s/__INTERVAL__/$(INTERVAL)/g" | \
+		sed "s/__TIMEOUT__/$(TIMEOUT)/g" | \
+		sed "s/__RETRY__/$(RETRY)/g" | \
 		kubectl -n $(NS) apply -f -
 
 patch:

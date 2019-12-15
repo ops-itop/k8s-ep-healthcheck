@@ -63,6 +63,14 @@ spec:
           value: "__AGENTID__"
         - name: TOUSER
           value: "__TOUSER__"
+        - name: LOGLEVEL
+          value: "__LOGLEVEL__"
+        - name: TIMEOUT
+          value: "__TIMEOUT__"
+        - name: RETRY
+          value: "__RETRY__"
+        - name: INTERVAL
+          value: "__INTERVAL__"
         resources:
           limits:
             cpu: "0.5"

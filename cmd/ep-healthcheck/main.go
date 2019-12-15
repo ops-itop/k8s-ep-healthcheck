@@ -37,6 +37,10 @@ type config struct {
 	Corpsecret    string `env:"CORPSECRET"`
 	Agentid       int    `env:"AGENTID"`
 	LogLevel      string `env:"LOGLEVEL" envDefault:"debug"`
+
+	Retry    int `env:"RETRY" envDefault:"3"`
+	Interval int `env:"INTERVAL" envDefault:"2"`
+	Timeout  int `env:"TIMEOUT" envDefault:"500"`
 }
 
 // one ipaddress for scaning
@@ -256,8 +260,8 @@ func checkPort(ip ipaddress, addresses *[]string, notReadyAddresses *[]string, w
 // retry
 func retryPort(ip ipaddress) error {
 	var e error
-	for i := 0; i < 3; i++ {
-		conn, err := net.DialTimeout("tcp", ip.Ipaddress+":"+ip.Port, time.Millisecond*100)
+	for i := 0; i < cfg.Retry; i++ {
+		conn, err := net.DialTimeout("tcp", ip.Ipaddress+":"+ip.Port, time.Millisecond*time.Duration(cfg.Timeout))
 		if conn != nil {
 			defer conn.Close()
 		}
@@ -313,7 +317,7 @@ func doCheck() {
 		}
 
 		wg.Wait()
-		time.Sleep(1 * time.Second)
+		time.Sleep(time.Duration(cfg.Interval) * time.Second)
 	}
 }
 
