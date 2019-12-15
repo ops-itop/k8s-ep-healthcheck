@@ -62,5 +62,9 @@ debug: ep build patch
 proxy:
 	echo "/api/v1/namespaces/$(NS)/services/$(IMAGE):8080/proxy/"
 	kubectl proxy --address=0.0.0.0 --port=8080 --accept-hosts '.*'
+
+nodeport:
+	sed "s/__APP__/$(IMAGE)/g" deploy/nodeport.yaml | \
+		kubectl -n $(NS) apply -f -
 clean:
 	kubectl delete deployment k8s-ep-healthcheck

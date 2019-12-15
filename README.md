@@ -26,6 +26,10 @@ Support wechat. edit `deploy/with-rbac.yaml` to set env or use make
 CORPID=corpid CORPSECRET=corpsecret AGENTID=agentid TOUSER=@all make run
 ```
 
+### Dashboard
+
+default use ingress. use `make nodeport` to create nodeport service.
+
 ## Available config
 
 |ENV | usage| default value|
