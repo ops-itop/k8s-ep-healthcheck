@@ -29,3 +29,11 @@ func StringSliceEqual(a, b []string) bool {
 
 	return true
 }
+
+func BoolToInt(v bool) (n int) {
+	n = 0
+	if v {
+		n = 1
+	}
+	return n
+}

@@ -12,6 +12,7 @@ import (
 	//"k8s.io/apimachinery/pkg/api/errors"
 	"github.com/caarlos0/env/v6"
 	"github.com/ops-itop/k8s-ep-healthcheck/internal/helper"
+	"github.com/ops-itop/k8s-ep-healthcheck/internal/stat"
 	"github.com/ops-itop/k8s-ep-healthcheck/pkg/notify/wechat"
 	"github.com/ops-itop/k8s-ep-healthcheck/pkg/utils"
 	log "github.com/sirupsen/logrus"
@@ -61,6 +62,8 @@ var (
 	ep          []corev1.Endpoints // store all endpoints
 	wechatToken wechat.AccessToken
 	listOptions metav1.ListOptions //labelSelector for endpoints
+
+	st stat.Stat
 )
 
 func logInit() {
@@ -201,6 +204,9 @@ func tcpChecker(e corev1.Endpoints, pwg *sync.WaitGroup) {
 	epLog.Info("Addresses: ", addresses)
 	epLog.Warn("notReadyAddresses: ", notReadyAddresses)
 
+	// Statistics
+	st.Update(e.Namespace, e.Name, addresses, notReadyAddresses, port)
+
 	addr := helper.EndpointBuilder(addresses, notReadyAddresses, e.Subsets[0].Ports)
 	if len(addresses) > 0 {
 		if utils.StringSliceEqual(notReadyIps, notReadyAddresses) {
@@ -297,6 +303,8 @@ func appInit() {
 		log.Panic(err.Error())
 	}
 	listOptions.LabelSelector = cfg.LabelSelector
+
+	st.Init()
 }
 
 func doCheck() {
@@ -310,6 +318,23 @@ func doCheck() {
 		go tcpChecker(e, &wg)
 	}
 	wg.Wait()
+}
+
+func api(r *gin.Engine) {
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"/endpoints": "show current endpoints",
+			"/stat":      "show healtch check result",
+		})
+	})
+
+	r.GET("/endpoints", func(c *gin.Context) {
+		c.JSON(200, ep)
+	})
+
+	r.GET("/stat", func(c *gin.Context) {
+		c.JSON(200, st)
+	})
 }
 
 func main() {
@@ -326,6 +351,7 @@ func main() {
 
 	router := gin.Default()
 	pprof.Register(router)
+	api(router)
 	go func() {
 		router.Run()
 	}()
