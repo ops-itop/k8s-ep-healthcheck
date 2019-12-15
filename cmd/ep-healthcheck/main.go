@@ -11,7 +11,9 @@ import (
 
 	//"k8s.io/apimachinery/pkg/api/errors"
 	"github.com/caarlos0/env/v6"
+	"github.com/ops-itop/k8s-ep-healthcheck/internal/helper"
 	"github.com/ops-itop/k8s-ep-healthcheck/pkg/notify/wechat"
+	"github.com/ops-itop/k8s-ep-healthcheck/pkg/utils"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -157,79 +159,6 @@ func patchEndpoint(namespace string, epName string, data map[string]interface{})
 	}
 }
 
-// convert ip list to endpoints addresses list
-func addrBuilder(addrs []string) []interface{} {
-	addrList := make([]interface{}, 0)
-
-	for _, v := range addrs {
-		item := map[string]string{"ip": v}
-		addrList = append(addrList, item)
-	}
-
-	return addrList
-}
-
-// build new endpoints subsets
-func epBuilder(addresses []string, notReadyAddresses []string, ports []corev1.EndpointPort) map[string]interface{} {
-	addr := make(map[string]interface{})
-	subsets := make([]interface{}, 0)
-	item := make(map[string]interface{})
-
-	item["notReadyAddresses"] = addrBuilder(notReadyAddresses)
-	item["addresses"] = addrBuilder(addresses)
-	item["ports"] = ports
-
-	subsets = append(subsets, item)
-	addr["subsets"] = subsets
-
-	return addr
-}
-
-// check if string in slice
-func contains(s []string, e string) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
-}
-
-// check if two slice equal
-func StringSliceEqual(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-
-	if (a == nil) != (b == nil) {
-		return false
-	}
-
-	// 忽略顺序
-	for _, v := range a {
-		if !contains(b, v) {
-			return false
-		}
-	}
-
-	return true
-}
-
-func getIPs(e corev1.Endpoints) ([]string, []string) {
-	ips := make([]string, 0)
-	notReadyIps := make([]string, 0)
-
-	for _, v := range e.Subsets[0].Addresses {
-		ips = append(ips, v.IP)
-	}
-
-	for _, v := range e.Subsets[0].NotReadyAddresses {
-		ips = append(ips, v.IP)
-		notReadyIps = append(notReadyIps, v.IP)
-	}
-	return ips, notReadyIps
-}
-
 // tcp checker
 func tcpChecker(e corev1.Endpoints, pwg *sync.WaitGroup) {
 	epLog := log.WithFields(log.Fields{
@@ -237,7 +166,7 @@ func tcpChecker(e corev1.Endpoints, pwg *sync.WaitGroup) {
 		"endpoint":  e.Name,
 	})
 
-	ips, notReadyIps := getIPs(e)
+	ips, notReadyIps := helper.GetAddresses(e)
 	var port string
 
 	// 只支持检测第一个端口
@@ -262,11 +191,11 @@ func tcpChecker(e corev1.Endpoints, pwg *sync.WaitGroup) {
 	wg.Wait()
 
 	epLog.Info("Addresses: ", addresses)
-	epLog.Info("notReadyAddresses: ", notReadyAddresses)
+	epLog.Warn("notReadyAddresses: ", notReadyAddresses)
 
-	addr := epBuilder(addresses, notReadyAddresses, e.Subsets[0].Ports)
+	addr := helper.EndpointBuilder(addresses, notReadyAddresses, e.Subsets[0].Ports)
 	if len(addresses) > 0 {
-		if StringSliceEqual(notReadyIps, notReadyAddresses) {
+		if utils.StringSliceEqual(notReadyIps, notReadyAddresses) {
 			if len(notReadyAddresses) > 0 {
 				epLog.Info("Already Marked notReady IPs. Ignore")
 			} else {
@@ -278,11 +207,12 @@ func tcpChecker(e corev1.Endpoints, pwg *sync.WaitGroup) {
 			// 执行更新前有必要看看线上endpoints是否和 ips 完全一致，防止出现老数据刷掉新数据的情况
 			currentEp, err := clientset.CoreV1().Endpoints(e.Namespace).Get(e.Name, metav1.GetOptions{})
 			if err != nil {
+				epLog.Error("get currentEp error: ", err.Error())
 				return
 			}
-			currentIPs, _ := getIPs(*currentEp)
+			currentIPs, _ := helper.GetAddresses(*currentEp)
 
-			if StringSliceEqual(ips, currentIPs) {
+			if utils.StringSliceEqual(ips, currentIPs) {
 				patchEndpoint(e.Namespace, e.Name, addr)
 			} else {
 				epLog.Warn("currentIps not same with local ips. Ignore")
@@ -304,17 +234,17 @@ func checkPort(ip ipaddress, addresses *[]string, notReadyAddresses *[]string, w
 		"endpoint":  ip.Name,
 	})
 
-	epLog.Debug("Scaning:  ", ip.Ipaddress+":"+ip.Port)
+	epLog.Trace("Scaning:  ", ip.Ipaddress+":"+ip.Port)
 
 	err := retryPort(ip)
 
 	if err != nil {
-		epLog.Debug("notReadyAddresses: ", ip.Ipaddress, " errMsg: ", err.Error())
+		epLog.Warn("notReadyAddresses: ", ip.Ipaddress, " errMsg: ", err.Error())
 		mu.Lock()
 		*notReadyAddresses = append(*notReadyAddresses, ip.Ipaddress)
 		mu.Unlock()
 	} else {
-		epLog.Debug("Addresses: ", ip.Ipaddress+":"+ip.Port)
+		epLog.Trace("Addresses: ", ip.Ipaddress+":"+ip.Port)
 		mu.Lock()
 		*addresses = append(*addresses, ip.Ipaddress)
 		mu.Unlock()
@@ -364,12 +294,7 @@ func appInit() {
 	listOptions.LabelSelector = cfg.LabelSelector
 }
 
-func main() {
-	startedLog()
-	k8sClientInit()
-	appInit()
-	logInit()
-
+func doCheck() {
 	// 首先初始化 ep 变量
 	getEndpoints()
 
@@ -390,4 +315,13 @@ func main() {
 		wg.Wait()
 		time.Sleep(1 * time.Second)
 	}
+}
+
+func main() {
+	startedLog()
+	k8sClientInit()
+	appInit()
+	logInit()
+
+	doCheck()
 }

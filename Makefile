@@ -44,7 +44,7 @@ patch:
 	kubectl -n $(NS) patch deployment k8s-ep-healthcheck -p '{"spec":{"template":{"spec":{"containers":[{"name":"k8s-ep-healthcheck","env":[{"name":"RESTART_","value":"'$(shell date +%s)'"}]}]}}}}'
 
 ep:
-	kubectl -n $(NS) apply -f ep.yaml
+	kubectl -n $(NS) apply -f deploy/ep.yaml
 
 debug: ep build patch
 
