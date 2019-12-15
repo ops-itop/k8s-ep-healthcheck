@@ -18,7 +18,7 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
-	//	"time"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -57,28 +57,28 @@ func main() {
 		panic(err.Error())
 	}
 
-	//var timeout int64
-	//timeout = 5
-	//	for {
-	watcher, err := clientset.CoreV1().Endpoints("").Watch(metav1.ListOptions{
-		LabelSelector: "type=external",
-		//		TimeoutSeconds: &timeout,
-		Watch: true,
-	})
-	if err != nil {
-		panic(err.Error())
-	}
-	for e := range watcher.ResultChan() {
-		endpoint := e.Object.(*corev1.Endpoints)
-		log.WithFields(log.Fields{
-			"namespace": endpoint.Namespace,
-			"endpoint":  endpoint.Name,
-		}).Info("Event ", e.Type, " watched. Re init.")
-		//getEndpoints()
-	}
+	var timeout int64
+	timeout = 5
+	for {
+		watcher, err := clientset.CoreV1().Endpoints("").Watch(metav1.ListOptions{
+			LabelSelector:  "type=external",
+			TimeoutSeconds: &timeout,
+			Watch:          true,
+		})
+		if err != nil {
+			panic(err.Error())
+		}
+		for e := range watcher.ResultChan() {
+			endpoint := e.Object.(*corev1.Endpoints)
+			log.WithFields(log.Fields{
+				"namespace": endpoint.Namespace,
+				"endpoint":  endpoint.Name,
+			}).Info("Event ", e.Type, " watched. Re init.")
+			//getEndpoints()
+		}
 
-	//		time.Sleep(1 * time.Second)
-	//	}
+		time.Sleep(1 * time.Second)
+	}
 }
 
 func homeDir() string {
