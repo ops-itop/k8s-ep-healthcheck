@@ -21,7 +21,7 @@ RETRY ?= 3
 
 REPO = $(REGISTRY)/$(PROJECT)/$(IMAGE)
 
-all: build push run
+all: build push run patch
 
 build: build-local build-docker
 

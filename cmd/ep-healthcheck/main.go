@@ -54,7 +54,7 @@ type ipaddress struct {
 var (
 	clientset   *kubernetes.Clientset
 	cfg         config
-	mu          sync.Mutex
+	mu          sync.RWMutex
 	ep          []corev1.Endpoints // store all endpoints
 	wechatToken wechat.AccessToken
 	listOptions metav1.ListOptions //labelSelector for endpoints
@@ -91,8 +91,8 @@ func getEndpoints() {
 		log.Fatal("Init endpoints error. ", err.Error())
 	}
 	mu.Lock()
+	defer mu.Unlock()
 	ep = endpoints.Items
-	mu.Unlock()
 	log.Info("Init endpoints seccessful")
 	epStr, _ := json.MarshalIndent(ep, "", " ")
 	log.Trace("Endpionts: ", string(epStr))
@@ -165,6 +165,7 @@ func patchEndpoint(namespace string, epName string, data map[string]interface{})
 
 // tcp checker
 func tcpChecker(e corev1.Endpoints, pwg *sync.WaitGroup) {
+	defer pwg.Done()
 	epLog := log.WithFields(log.Fields{
 		"namespace": e.Namespace,
 		"endpoint":  e.Name,
@@ -227,12 +228,11 @@ func tcpChecker(e corev1.Endpoints, pwg *sync.WaitGroup) {
 	} else {
 		epLog.Warn("No lived ipaddress. Ignore")
 	}
-
-	pwg.Done()
 }
 
 // do check
 func checkPort(ip ipaddress, addresses *[]string, notReadyAddresses *[]string, wg *sync.WaitGroup) {
+	defer wg.Done()
 	epLog := log.WithFields(log.Fields{
 		"namespace": ip.Namespace,
 		"endpoint":  ip.Name,
@@ -245,16 +245,14 @@ func checkPort(ip ipaddress, addresses *[]string, notReadyAddresses *[]string, w
 	if err != nil {
 		epLog.Warn("notReadyAddresses: ", ip.Ipaddress, " errMsg: ", err.Error())
 		mu.Lock()
+		defer mu.Unlock()
 		*notReadyAddresses = append(*notReadyAddresses, ip.Ipaddress)
-		mu.Unlock()
 	} else {
 		epLog.Trace("Addresses: ", ip.Ipaddress+":"+ip.Port)
 		mu.Lock()
+		defer mu.Unlock()
 		*addresses = append(*addresses, ip.Ipaddress)
-		mu.Unlock()
 	}
-
-	wg.Done()
 }
 
 // retry
