@@ -94,18 +94,30 @@ func getEndpoints() {
 
 // need update global var ep.
 func watchEndpoints() {
-	watcher, err := clientset.CoreV1().Endpoints("").Watch(listOptions)
-	if err != nil {
-		log.Fatal("Watch endpoints error. ", err.Error())
-	}
+	watchOptions := listOptions
+	watchOptions.Watch = true
+	watchOptions.TimeoutSeconds = &cfg.WatchTimeout
 
-	for e := range watcher.ResultChan() {
-		endpoint := e.Object.(*corev1.Endpoints)
-		log.WithFields(log.Fields{
-			"namespace": endpoint.Namespace,
-			"endpoint":  endpoint.Name,
-		}).Info("Event ", e.Type, " watched. Re init.")
-		getEndpoints()
+	watchStr, _ := json.Marshal(watchOptions)
+
+	// keep watch
+	for {
+		log.Info("Start Watch with option: ", string(watchStr))
+		watcher, err := clientset.CoreV1().Endpoints("").Watch(watchOptions)
+		if err != nil {
+			log.Fatal("Watch endpoints error. ", err.Error())
+		}
+
+		for e := range watcher.ResultChan() {
+			endpoint := e.Object.(*corev1.Endpoints)
+			log.WithFields(log.Fields{
+				"namespace": endpoint.Namespace,
+				"endpoint":  endpoint.Name,
+			}).Info("Event ", e.Type, " watched. Re init.")
+			getEndpoints()
+		}
+
+		time.Sleep(2 * time.Second)
 	}
 }
 

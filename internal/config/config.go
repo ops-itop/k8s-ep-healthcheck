@@ -12,9 +12,10 @@ type Config struct {
 	Agentid       int    `env:"AGENTID"`
 	LogLevel      string `env:"LOGLEVEL" envDefault:"debug"`
 
-	Retry    int `env:"RETRY" envDefault:"3"`
-	Interval int `env:"INTERVAL" envDefault:"2"`
-	Timeout  int `env:"TIMEOUT" envDefault:"500"`
+	Retry        int   `env:"RETRY" envDefault:"3"`
+	Interval     int   `env:"INTERVAL" envDefault:"2"`
+	Timeout      int   `env:"TIMEOUT" envDefault:"500"`
+	WatchTimeout int64 `env:"WATCHTIMEOUT" envDefault:"300"`
 }
 
 func (cfg *Config) Init() error {
