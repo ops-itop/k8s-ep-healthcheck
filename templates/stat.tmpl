@@ -3,6 +3,7 @@
 		<thead>
 			<th>Namespace</th>
 			<th>Name</th>
+			<th>Port</th>
 			<th>Status</th>
 			<th>Addresses</th>
 		</thead>
@@ -10,6 +11,7 @@
 		<tr class="endpoint">
 			<td class="endpoint">{{ .Namespace }}</td>
 			<td class="endpoint">{{ .Name }}</td>
+			<td class="endpoint">{{ .Port }}</td>
 			<td class="epstat-{{ .Status }} endpoint">{{ .Status }}</td>
 			<td class="address">
 				<table class="address">

@@ -68,8 +68,9 @@ func (addr *StatAddr) Update(ip string, status int, succ int, failed int) {
 	}
 }
 
-func remove(m map[string]StatEp, key string) {
+func remove(m map[string]StatEp, n map[string]StatEp, key string) {
 	if _, ok := m[key]; ok {
+		n[key] = m[key]
 		delete(m, key)
 	}
 }
@@ -111,11 +112,11 @@ func (st *Stat) Update(namespace string, name string, addresses []string, notRea
 	count := len(notReadyAddresses)
 
 	if count == 0 {
-		remove(st.Unhealth, key)
+		remove(st.Unhealth, st.Health, key)
 		update(st.Health, status, namespace, name, addresses, notReadyAddresses, port)
 	} else {
 		status = 0
-		remove(st.Health, key)
+		remove(st.Health, st.Unhealth, key)
 		update(st.Unhealth, status, namespace, name, addresses, notReadyAddresses, port)
 	}
 }
