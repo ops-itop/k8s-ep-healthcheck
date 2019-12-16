@@ -321,10 +321,12 @@ func doCheck() {
 }
 
 func api(r *gin.Engine) {
+	r.LoadHTMLGlob("templates/*")
+
 	r.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"/endpoints": "show current endpoints",
-			"/stat":      "show healtch check result",
+		c.HTML(200, "index.tmpl", gin.H{
+			"Unhealth": st.Unhealth,
+			"Health":   st.Health,
 		})
 	})
 

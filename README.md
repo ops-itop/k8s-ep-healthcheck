@@ -1,6 +1,8 @@
 # k8s-ep-healthcheck
 Healthcheck for custom endpoints. May be useful when use ingress-nginx for custom endpoints (ingress-nginx had remove annotation `upstream-max-fails` and `upstream-max-timeout`, See https://github.com/kubernetes/ingress-nginx/issues/4773).
 
+![](deploy/ep-healthcheck.png)
+
 ## Usage
 
 ```
