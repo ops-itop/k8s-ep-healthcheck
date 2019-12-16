@@ -50,7 +50,9 @@ func (addr *StatAddr) Init(ip string, status int) {
 	addr.Failed = 0
 }
 
-func (ep *StatEp) Update() {
+func (ep *StatEp) Update(status int, port string) {
+	ep.Status = status
+	ep.Port = port
 }
 
 func (addr *StatAddr) Update(ip string, status int, succ int, failed int) {
@@ -75,6 +77,12 @@ func remove(m map[string]StatEp, n map[string]StatEp, key string) {
 	}
 }
 
+func removeIp(m map[string]StatAddr, ip string) {
+	if _, ok := m[ip]; ok {
+		delete(m, ip)
+	}
+}
+
 func update(m map[string]StatEp, status int, namespace string, name string, addresses []string, notReadyAddresses []string, port string) {
 	key := namespace + "." + name
 	ips := append(addresses, notReadyAddresses...)
@@ -84,6 +92,7 @@ func update(m map[string]StatEp, status int, namespace string, name string, addr
 	if _, ok := m[key]; !ok {
 		endpoint.Init(namespace, name, status, port)
 	} else {
+		endpoint.Update(status, port)
 		for _, v := range ips {
 			ipaddr := endpoint.Addresses[v]
 			ipstat := utils.BoolToInt(utils.Contains(addresses, v))
@@ -96,6 +105,12 @@ func update(m map[string]StatEp, status int, namespace string, name string, addr
 			}
 
 			m[key].Addresses[v] = ipaddr
+		}
+
+		for _, val := range endpoint.Addresses {
+			if !utils.Contains(ips, val.Ip) {
+				removeIp(endpoint.Addresses, val.Ip)
+			}
 		}
 	}
 
