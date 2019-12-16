@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 	//"reflect"
+	"context"
 	"fmt"
-	"net"
 	"os"
 	"sync"
 	"time"
@@ -16,6 +16,7 @@ import (
 	"github.com/ops-itop/k8s-ep-healthcheck/pkg/notify/wechat"
 	"github.com/ops-itop/k8s-ep-healthcheck/pkg/utils"
 	log "github.com/sirupsen/logrus"
+	tcp "github.com/tevino/tcp-shaker"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -238,27 +239,39 @@ func checkPort(ip ipaddress, addresses *[]string, notReadyAddresses *[]string, w
 
 	err := retryPort(ip)
 
-	if err != nil {
-		epLog.Warn("notReadyAddresses: ", ip.Ipaddress, " errMsg: ", err.Error())
+	switch err {
+	case tcp.ErrTimeout:
+		epLog.Warn("Tcp check error: ", ip.Ipaddress, " errMsg: ", err.Error())
 		mu.Lock()
 		defer mu.Unlock()
 		*notReadyAddresses = append(*notReadyAddresses, ip.Ipaddress)
-	} else {
-		epLog.Trace("Addresses: ", ip.Ipaddress+":"+ip.Port)
+	case nil:
+		epLog.Trace("Tcp check succeeded: ", ip.Ipaddress+":"+ip.Port)
 		mu.Lock()
 		defer mu.Unlock()
 		*addresses = append(*addresses, ip.Ipaddress)
+	default:
+		epLog.Error("Error occurred while connecting: ", ip.Ipaddress+":"+ip.Port, " errMsg: ", err)
 	}
 }
 
 // retry
 func retryPort(ip ipaddress) error {
 	var e error
-	for i := 0; i < cfg.Retry; i++ {
-		conn, err := net.DialTimeout("tcp", ip.Ipaddress+":"+ip.Port, time.Millisecond*time.Duration(cfg.Timeout))
-		if conn != nil {
-			defer conn.Close()
+	c := tcp.NewChecker()
+
+	ctx, stopChecker := context.WithCancel(context.Background())
+	defer stopChecker()
+	go func() {
+		if err := c.CheckingLoop(ctx); err != nil {
+			log.Error("checking loop stopped due to fatal error: ", err)
 		}
+	}()
+
+	<-c.WaitReady()
+
+	for i := 0; i < cfg.Retry; i++ {
+		err := c.CheckAddr(ip.Ipaddress+":"+ip.Port, time.Millisecond*time.Duration(cfg.Timeout))
 
 		if err == nil {
 			return err
