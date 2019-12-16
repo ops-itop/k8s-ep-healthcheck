@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--	<meta http-equiv="refresh" content="5">-->
+	<meta charset="UTF-8">
+	<title>{{ .Title }}</title>
+	<style type="text/css">
+		table {
+			border-collapse: collapse; 
+			border-spacing: 0; 
+			background-color: #f9f9f9;
+			table-layout: auto;
+			max-width: 75%;
+		}
+		table.endpoint {
+			border: 1px solid #aaa; 
+		}
+		table.endpoint thead {background-color: #D9E2DF;}
+		tr.endpoint,
+		td.endpoint,
+		th {
+			margin: 0.3em;
+			padding: 0.1em;
+			border: 1px solid #aaa;
+		}
+		td { vertical-align: middle; }	
+
+		td.epstat-0 {
+			background-color: yellow;
+			text-align: center;
+		}
+
+		tr.ipstat-0 {
+			background-color: red;
+		}
+
+		table.address {
+			border: 0px solid #999 !important;
+		}
+
+		td.address {
+			border-top: 0;
+			border-right: 1px solid #999;
+			border-bottom: 1px solid #999;
+			border-left: 0;
+		}
+
+		table.address tr.lastrow td {
+			border-bottom: 0;
+		}
+
+		table.address tr td.lastCol {
+			border-right: 0;
+		}
+
+		table.address thead {background-color: #D9E2DF;}
+		tr.address tr,
+		td.address td {
+			margin: 0.1em;
+			padding: 0.1em;
+		}
+
+		td.status {
+			text-align: center;
+		}
+	</style>
+</head>
+<body>
+	<h1>Custom Endpoint HealthCheck</h1>
+	<h2>APIs</h2>
+	<ul>
+		<li><a href="/endpoints">/endpoints</a></li>
+		<li><a href="/stat">/stat</a></li>
+		<li><a href="/debug/pprof">/debug/pprof</a></li>
+	</ul>
+
+	<div class="ep-health">
+		<h2>Unhealth</h2>
+		{{ template "stat.tmpl" .Unhealth }}
+
+		<h2>Health</h2>
+		{{ template "stat.tmpl" .Health }}
+	</div>
+</body>
+</html>

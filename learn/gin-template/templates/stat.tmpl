@@ -1,0 +1,35 @@
+<div class="stat">
+	<table class="endpoint">
+		<thead>
+			<th>Namespace</th>
+			<th>Name</th>
+			<th>Status</th>
+			<th>Addresses</th>
+		</thead>
+		{{ range . }}
+		<tr class="endpoint">
+			<td class="endpoint">{{ .Namespace }}</td>
+			<td class="endpoint">{{ .Name }}</td>
+			<td class="epstat-{{ .Status }} endpoint">{{ .Status }}</td>
+			<td class="address">
+				<table class="address">
+					<thead>
+						<th>IP</th>
+						<th>status</th>
+						<th>succ</th>
+						<th>failed</th>
+					</thead>
+					{{ range .Addresses }}
+					<tr class="ipstat-{{ .Status }} address">
+						<td class="address">{{ .Ip }}</td>
+						<td class="status address">{{ .Status }}</td>
+						<td class="address">{{ .Succ }}</td>
+						<td class="address">{{ .Failed }}</td>
+					</tr>
+					{{ end }}
+				</table>
+			</td>
+		</tr>
+		{{ end }}
+	</table>
+</div>

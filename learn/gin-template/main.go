@@ -11,6 +11,26 @@ type Foo struct {
 	Value2 string
 }
 
+type Stat struct {
+	Unhealth map[string]StatEp `json:"unhealth"`
+	Health   map[string]StatEp `json:"health"`
+}
+
+type StatEp struct {
+	Name      string              `json:"name"`
+	Namespace string              `json:"namespace"`
+	Status    int                 `json:"status"`
+	Addresses map[string]StatAddr `json:"addresses"`
+	Port      string              `json:"port"`
+}
+
+type StatAddr struct {
+	Ip     string `json:"ip"`
+	Status int    `json:"status"`
+	Succ   int    `json:"succ"`
+	Failed int    `json""failed"`
+}
+
 func main() {
 	router := gin.Default()
 	router.LoadHTMLGlob("templates/*")
@@ -55,6 +75,35 @@ func main() {
 		values["version"] = "1.7.4"
 
 		c.HTML(http.StatusOK, "mapSelectKeys.tmpl", gin.H{"myMap": values})
+	})
+
+	stat := Stat{
+		Unhealth: map[string]StatEp{
+			"dev.ep1": StatEp{
+				Name:      "ep1",
+				Namespace: "dev",
+				Status:    0,
+				Port:      "80",
+				Addresses: map[string]StatAddr{
+					"10.0.0.1": StatAddr{
+						Ip:     "10.0.0.1",
+						Status: 0,
+						Succ:   22,
+						Failed: 33,
+					},
+				},
+			},
+		},
+	}
+
+	router.GET("/", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "index.tmpl", gin.H{
+			"Unhealth": stat.Unhealth,
+			"Health":   stat.Health,
+		})
+	})
+	router.GET("/stat", func(c *gin.Context) {
+		c.JSON(http.StatusOK, stat)
 	})
 
 	router.Run("0.0.0.0:9999")
