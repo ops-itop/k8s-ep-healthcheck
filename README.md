@@ -41,7 +41,7 @@ default use ingress. use `make nodeport` to create nodeport service.
 |--|--|--|
 |REGISTRY | custom registry | registry.cn-beijing.aliyuncs.com |
 |PROJECT | custom project name |kubebase |
-|IMAGE | custom image name |k8s-ep-healthcheck |
+|APP | custom image name |k8s-ep-healthcheck |
 |TAG | custom image tag |latest |
 |NS | kubernetes namespace for deploy | default |
 |CORPID |wechat corpid | corpid |
@@ -52,4 +52,5 @@ default use ingress. use `make nodeport` to create nodeport service.
 |INTERVAL | check interval for endpoints|2|
 |TIMEOUT | timeout for tcp check |500|
 |RETRY | retry for tcp check |3|
-|HOST | hostname for ingress |$(IMAGE).local|
+|HOST | hostname for ingress |$(APP).local|
+|WATCHTIMEOUT | timeout for watch api | 300 |

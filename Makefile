@@ -19,6 +19,7 @@ INTERVAL ?= 2
 TIMEOUT ?= 500
 RETRY ?= 3
 HOST ?= $(APP).local
+WATCHTIMEOUT ?= 300
 
 REPO = $(REGISTRY)/$(PROJECT)/$(APP)
 
@@ -49,6 +50,7 @@ run:
 		sed "s/__RETRY__/$(RETRY)/g" | \
 		sed "s/__APP__/$(APP)/g" | \
 		sed "s/__HOST__/$(HOST)/g" | \
+		sed "s/__WATCHTIMEOUT__/$(WATCHTIMEOUT)/g" | \
 		kubectl -n $(NS) apply -f -
 
 patch:

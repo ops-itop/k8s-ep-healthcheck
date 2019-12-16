@@ -73,6 +73,8 @@ spec:
           value: "__RETRY__"
         - name: INTERVAL
           value: "__INTERVAL__"
+        - name: WATCHTIMEOUT
+          value: "__WATCHTIMEOUT__"
         resources:
           limits:
             cpu: "0.5"
