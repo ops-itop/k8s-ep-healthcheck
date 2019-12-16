@@ -3,7 +3,7 @@ Healthcheck for custom endpoints. May be useful when use ingress-nginx for custo
 
 ## Preview
 <p align="center">
-  <img height="520" src="deploy/ep-healthcheck.png">
+  <img height="320" src="deploy/ep-healthcheck.png">
 </p>
 
 ## Usage
