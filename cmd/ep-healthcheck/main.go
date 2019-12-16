@@ -251,19 +251,16 @@ func checkPort(ip ipaddress, addresses *[]string, notReadyAddresses *[]string, w
 
 	err := retryPort(ip)
 
-	switch err {
-	case tcp.ErrTimeout:
-		epLog.Warn("Tcp check error: ", ip.Ipaddress, " errMsg: ", err.Error())
+	if err != nil {
+		epLog.Warn("Tcp check error: ", ip.Ipaddress+":"+ip.Port, " errMsg: ", err.Error())
 		mu.Lock()
 		defer mu.Unlock()
 		*notReadyAddresses = append(*notReadyAddresses, ip.Ipaddress)
-	case nil:
+	} else {
 		epLog.Trace("Tcp check succeeded: ", ip.Ipaddress+":"+ip.Port)
 		mu.Lock()
 		defer mu.Unlock()
 		*addresses = append(*addresses, ip.Ipaddress)
-	default:
-		epLog.Error("Error occurred while connecting: ", ip.Ipaddress+":"+ip.Port, " errMsg: ", err)
 	}
 }
 
