@@ -1,15 +1,18 @@
 package main
 
 import (
+	"context"
+	tcp "github.com/tevino/tcp-shaker"
 	"log"
-	"net"
 	"sync"
 	"time"
 )
 
-var ips = []string{"127.0.0.1", "192.168.0.1", "10.2.3.4", "10.5.6.7"}
-var port = "80"
-var mu sync.Mutex
+var (
+	ips  = []string{"127.0.0.1", "192.168.0.1", "10.5.6.7"}
+	port = "80"
+	mu   sync.RWMutex
+)
 
 func Scanner() {
 	var addresses = make([]string, 0)
@@ -32,18 +35,33 @@ func Scanner() {
 func ScanPort(ip string, addresses *[]string, notReadyAddress *[]string, wg *sync.WaitGroup) {
 	log.Println("scaning ", ip, "port", port)
 
-	conn, err := net.DialTimeout("tcp", ip+":"+port, time.Millisecond*100)
-	if conn != nil {
-		defer conn.Close()
-	}
+	c := tcp.NewChecker()
 
-	if err != nil {
+	ctx, stopChecker := context.WithCancel(context.Background())
+	defer stopChecker()
+	go func() {
+		if err := c.CheckingLoop(ctx); err != nil {
+			log.Println("checking loop stopped due to fatal error: ", err)
+		}
+	}()
+
+	<-c.WaitReady()
+
+	err := c.CheckAddr(ip+":"+port, time.Millisecond*1000)
+
+	switch err {
+	case tcp.ErrTimeout:
 		log.Println("notReadyAddress: ", ip, "errMsg: ", err)
 		mu.Lock()
+		defer mu.Unlock()
 		*notReadyAddress = append(*notReadyAddress, ip)
-		mu.Unlock()
-	} else {
+	case nil:
+		log.Println("Addresses: ", ip)
+		mu.Lock()
+		defer mu.Unlock()
 		*addresses = append(*addresses, ip)
+	default:
+		log.Println("Error occurred while connecting: ", err)
 	}
 
 	wg.Done()
